@@ -4,7 +4,7 @@ import win32com.client
 from time import sleep
 from datetime import datetime
 
-def va01_2(sesionsap, fecha):
+def va01_2(sesionsap, fecha, pedido):
 
      #----------------------------#
      pythoncom.CoInitialize()
@@ -38,7 +38,7 @@ def va01_2(sesionsap, fecha):
           # session.findById("wnd[0]").maximize()
           session.findById("wnd[0]/tbar[0]/okcd").text = "/NVA02"
           session.findById("wnd[0]").sendVKey(0)
-          # session.findById("wnd[0]/usr/ctxtVBAK-VBELN").text = pedido
+          session.findById("wnd[0]/usr/ctxtVBAK-VBELN").text = pedido
           session.findById("wnd[0]/usr/ctxtVBAK-VBELN").caretPosition = 7
           session.findById("wnd[0]").sendVKey(0)
           session.findById(r"wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\01/ssubSUBSCREEN_BODY:SAPMV45A:4400/ssubHEADER_FRAME:SAPMV45A:4440/ctxtRV45A-KETDAT").text = fecha_formato_sap
@@ -68,10 +68,10 @@ def va01_2(sesionsap, fecha):
                session.findById("wnd[0]/tbar[0]/btn[11]").press()
                mensaje = session.findById("wnd[0]/sbar").text
                print(f"Resultado VA02: {mensaje}")
-               return mensaje
+               return mensaje, mensaje[18:25]
           except Exception as ex:
                print(f"Error al grabar pedido {pedido} en VA02 -- {ex}")
-               return False
+               return False, False
      except Exception as e:
           print(f"Error al cargar el pedido", e)
 

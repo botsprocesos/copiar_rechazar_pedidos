@@ -4,6 +4,7 @@ import pandas as pd
 from datetime import datetime
 from requestSQLHana import GetDataHana
 import warnings
+from threading import Thread
 warnings.filterwarnings('ignore')
 
 
@@ -49,27 +50,45 @@ class CopiarRechazar:
         except Exception as ex:
             print(f">> No se pudo realizar el merge de los dataframes. Error: {ex}")
 
-    def modificar_solicitante_rnos(self, df_pedidos_modificar):
+    def modificar_solicitante_rnos(self, df_pedidos_modificar, hora, num_sesion):
         lista_pedidos = []
+        i = 1
         for pedido, solicitante, fecha in zip(df_pedidos_modificar["PEDIDOS"], df_pedidos_modificar["NSOL"], df_pedidos_modificar["FE_ENTREGA"]):
-            print(f"Pedido: {pedido}, NSOL: {solicitante}, Fecha: {fecha}")
-            resultados = toma_prd(pedido, solicitante, fecha, 0)
+            print(f">> {i} >> Pedido: {pedido}, NSOL: {solicitante}, Fecha: {fecha}")
+            resultados = toma_prd(pedido, solicitante, fecha, num_sesion)
             lista_pedidos.append(resultados)
             print("------------")
-        df_resultados = pd.DataFrame(lista_pedidos, columns=["PEDIDOS", "MENSAJE TOMA", "MENSAJE VA02"])
-        print(df_resultados)
+            i += 1
+        df_resultados = pd.DataFrame(lista_pedidos, columns=["PEDIDOS", "MENSAJE TOMA", "MENSAJE VA02", "NUEVO_PEDIDO", "PEDIDO_SQL"])
+        # print(df_resultados)
         resultado_df_final = df_pedidos_modificar.merge(df_resultados, on="PEDIDOS", how="left")
-        print(resultado_df_final)
-        resultado_df_final.to_excel("../resources/pedidos_copiar_rechazar_resultados.xlsx", index=False)
+        # print(resultado_df_final)
+        resultado_df_final.to_excel(f"../resources/pedidos_resultados_{hora}_{num_sesion}.xlsx", index=False)
 
 
-objeto_cop_rech = CopiarRechazar("../resources/pedidos_copiar_rechazar.xlsx")
-df_excel = objeto_cop_rech.traer_datos_excel()
-pedidos_excel = df_excel["PEDIDOS"]
-df_fechas_y_pedidos = objeto_cop_rech.traer_fecha_pedidos(tuple(pedidos_excel))
-data_frames_unidos = objeto_cop_rech.unir_data_frames(df_excel, df_fechas_y_pedidos)
-data_frames_unidos.to_excel("../resources/pedidos_copiar_rechazar_fechas.xlsx")
+# Excel 1:
+def hilo_1():
+    objeto_cop_rech_1 = CopiarRechazar("../resources/pedidos_copiar_rechazar_1.xlsx")
+    df_excel = objeto_cop_rech_1.traer_datos_excel()
+    pedidos_excel = df_excel["PEDIDOS"]
+    df_fechas_y_pedidos = objeto_cop_rech_1.traer_fecha_pedidos(tuple(pedidos_excel))
+    data_frames_unidos = objeto_cop_rech_1.unir_data_frames(df_excel, df_fechas_y_pedidos)
+    # data_frames_unidos.to_excel("../resources/ControlFaltantesEnControl.xlsx")
+    hora = objeto_cop_rech_1.create_date()
+    objeto_cop_rech_1.modificar_solicitante_rnos(data_frames_unidos, hora, 0)
 
-# Iterar pedidos
-objeto_cop_rech.modificar_solicitante_rnos(data_frames_unidos)
+# Excel 2
+def hilo_2():
+    objeto_cop_rech_2 = CopiarRechazar("../resources/pedidos_copiar_rechazar_2.xlsx")
+    df_excel = objeto_cop_rech_2.traer_datos_excel()
+    pedidos_excel = df_excel["PEDIDOS"]
+    df_fechas_y_pedidos = objeto_cop_rech_2.traer_fecha_pedidos(tuple(pedidos_excel))
+    data_frames_unidos = objeto_cop_rech_2.unir_data_frames(df_excel, df_fechas_y_pedidos)
+    hora = objeto_cop_rech_2.create_date()
+    objeto_cop_rech_2.modificar_solicitante_rnos(data_frames_unidos, hora, 1)
+
+h1 = Thread(target=hilo_1)
+# h2 = Thread(target=hilo_2)
+h1.start()
+# h2.start()
 

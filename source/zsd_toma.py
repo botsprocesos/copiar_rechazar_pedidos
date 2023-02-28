@@ -98,7 +98,6 @@ def toma_prd(nro_pedido, nuevo_rnos, fecha, sesionsap):
         application = None
         SapGuiAuto = None
         return
-
     try:
         session.findById("wnd[0]/tbar[0]/okcd").text = "/nzsd_toma"
         session.findById("wnd[0]").sendVKey(0)
@@ -129,31 +128,32 @@ def toma_prd(nro_pedido, nuevo_rnos, fecha, sesionsap):
                 try:
                     session.findById("wnd[1]/usr/btnBUTTON_1").press()
                 except:
-                    pass
+                    break
+                    # pass
             session.findById("wnd[1]/tbar[0]/btn[0]").press()
             mensaje = session.findById("wnd[0]/sbar").text
-            # pedido_nuevo = mensaje[25:32]
-            mensaje_va02 = va01_2(sesionsap, fecha)
+            nuevo_pedido_toma = mensaje[23:30]
+            mensaje_va02, nuevo_pedido = va01_2(sesionsap, fecha, nuevo_pedido_toma)
             if mensaje_va02:
-                return nro_pedido, mensaje, mensaje_va02
+                return nro_pedido, mensaje, mensaje_va02, nuevo_pedido ,f"'000{nuevo_pedido}',"
             else:
-                return nro_pedido, mensaje, "ERROR VA02"
+                return nro_pedido, mensaje, "ERROR VA02", "NO PEDIDO VA02", "NO PEDIDO VA02"
         except:
             session.findById("wnd[1]/tbar[0]/btn[0]").press()
             mensaje = session.findById("wnd[0]/sbar").text
-            mensaje_va02 = va01_2(sesionsap, nro_pedido, fecha)
+            nuevo_pedido_toma = mensaje[23:30]
+            mensaje_va02, nuevo_pedido = va01_2(sesionsap, fecha, nuevo_pedido_toma)
             if mensaje_va02:
-                return nro_pedido, mensaje, mensaje_va02
+                return nro_pedido, mensaje, mensaje_va02, nuevo_pedido, f"'000{nuevo_pedido}',"
             else:
-                return nro_pedido, mensaje, "ERROR VA02"
-        # return nro_pedido, mensaje
+                return nro_pedido, mensaje, "ERROR VA02", "NO PEDIDO VA02", "NO PEDIDO VA02"
     except Exception as ex:
         try:
             mensaje = session.findById("wnd[0]/sbar").text
-            return nro_pedido, mensaje, "No pude ir a la VA02"
+            return nro_pedido, mensaje, "No pude ir a la VA02", " ", " "
         except Exception as e:
             print(f"------- Error general -------")
-            return nro_pedido, "Error General", "Error General"
+            return nro_pedido, "Error General", "Error General", "ERROR GENERAL", "ERROR GENERAL"
 
 
 # print(toma_prd("6140075", "10000305", 0))

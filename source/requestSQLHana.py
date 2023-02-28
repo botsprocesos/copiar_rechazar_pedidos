@@ -23,9 +23,20 @@ class GetDataHana:
             print(f"Ocurrio un error en la conexion a HANA: {e}")
 
     def define_query(self, pedidos):
-        self.__query = f"""SELECT VBELN AS PEDIDOS, VDATU AS FE_ENTREGA
-        FROM VBAK
-        WHERE VBELN IN {pedidos}"""
+        self.__query = f"""
+            SELECT VBAK.VBELN AS PEDIDOS,
+                VBAK.ERDAT AS FECHA_CREACION,
+                VBAK.VDATU AS FE_ENTREGA,
+                VBAK.KUNNR AS SOLICITANTE,
+                VBKD.PRSDT AS FE_PRECIO
+            FROM VBAK
+            INNER JOIN VBKD
+            ON VBAK.VBELN = VBKD.VBELN
+            WHERE VBAK.VBELN IN {pedidos}
+        """
+        # self.__query = f"""SELECT VBELN AS PEDIDOS, VDATU AS FE_ENTREGA
+        # FROM VBAK
+        # WHERE VBELN IN {pedidos}"""
 
     def get_request_hana(self):
         try:
